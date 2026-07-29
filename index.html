@@ -638,7 +638,7 @@ function addSupplier(name) {
       <tbody id="supplier-items-${id}">
       </tbody>
     </table>
-    <div class="supplier-subtotal" id="supplier-subtotal-${id}">本家合计：0.00</div>
+    <div class="supplier-subtotal" id="supplier-subtotal-${id}">本家合计：0</div>
     <button class="btn btn-outline btn-sm add-product-btn" onclick="addProduct(${id})">＋ 添加产品</button>
   `;
   document.getElementById('supplier-groups').appendChild(div);
@@ -659,7 +659,7 @@ function addProduct(supplierId) {
     <td><input type="text" placeholder="产品名" oninput="autoCalcDaily()"></td>
     <td><input type="number" class="num" placeholder="0" min="0" step="1" oninput="autoCalcDaily()"></td>
     <td><input type="number" class="num" placeholder="0" min="0" step="0.01" oninput="autoCalcDaily()"></td>
-    <td class="item-subtotal" style="text-align:right;font-weight:500;">0.00</td>
+    <td class="item-subtotal" style="text-align:right;font-weight:500;">0</td>
     <td><button class="btn btn-danger btn-sm" onclick="removeProduct(this)">✕</button></td>
   `;
   tbody.appendChild(tr);
@@ -692,7 +692,7 @@ function autoCalcDaily() {
       const qty = parseFloat(inputs[1].value) || 0;
       const price = parseFloat(inputs[2].value) || 0;
       const subtotal = qty * price;
-      row.querySelector('.item-subtotal').textContent = subtotal.toFixed(2);
+      row.querySelector('.item-subtotal').textContent = fmtNum(subtotal);
       if (product && qty > 0) {
         hasData = true;
         totalGoods += subtotal;
@@ -700,7 +700,7 @@ function autoCalcDaily() {
       }
     });
 
-    group.querySelector('.supplier-subtotal').textContent = `本家合计：${groupTotal.toFixed(2)}`;
+    group.querySelector('.supplier-subtotal').textContent = `本家合计：${fmtNum(groupTotal)}`;
   });
 
   const budget = parseFloat(document.getElementById('daily-budget').value) || 0;
@@ -710,12 +710,12 @@ function autoCalcDaily() {
   const totalExpense = totalGoods + freight + shrinkCost + otherCost;
   const remain = budget - totalExpense;
 
-  document.getElementById('daily-subtotal').textContent = totalGoods.toFixed(2);
-  document.getElementById('daily-freight-display').textContent = freight.toFixed(2);
-  document.getElementById('daily-shrink-display').textContent = shrinkCost.toFixed(2);
-  document.getElementById('daily-other-display').textContent = otherCost.toFixed(2);
-  document.getElementById('daily-total-expense').textContent = totalExpense.toFixed(2);
-  document.getElementById('daily-remain').textContent = remain.toFixed(2);
+  document.getElementById('daily-subtotal').textContent = fmtNum(totalGoods);
+  document.getElementById('daily-freight-display').textContent = fmtNum(freight);
+  document.getElementById('daily-shrink-display').textContent = fmtNum(shrinkCost);
+  document.getElementById('daily-other-display').textContent = fmtNum(otherCost);
+  document.getElementById('daily-total-expense').textContent = fmtNum(totalExpense);
+  document.getElementById('daily-remain').textContent = fmtNum(remain);
 
   // Generate report text
   const date = document.getElementById('daily-date').value.trim() || '(日期)';
@@ -2203,7 +2203,7 @@ function loadDailyFormData(record) {
         <td><input type="text" value="${item.product.replace(/"/g,'&quot;')}" placeholder="产品名" oninput="autoCalcDaily()"></td>
         <td><input type="number" class="num" value="${item.qty}" placeholder="0" min="0" step="1" oninput="autoCalcDaily()"></td>
         <td><input type="number" class="num" value="${item.price}" placeholder="0" min="0" step="0.01" oninput="autoCalcDaily()"></td>
-        <td class="item-subtotal" style="text-align:right;font-weight:500;">0.00</td>
+        <td class="item-subtotal" style="text-align:right;font-weight:500;">0</td>
         <td><button class="btn btn-danger btn-sm" onclick="removeProduct(this)">✕</button></td>
       `;
       tbody.appendChild(tr);
