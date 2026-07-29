@@ -365,6 +365,11 @@ textarea:focus { outline: none; border-color: #d63384; }
   <button class="tab" onclick="switchTab('summary')">📦 野货管理</button>
   <button class="tab" onclick="switchTab('cmulti')">📋 正品多日汇总</button>
 </div>
+<div id="backup-reminder" style="display:none;background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:10px 14px;margin:8px 0;font-size:13px;color:#856404;align-items:center;gap:10px;">
+  <span style="flex:1;">⚠️ 已超过 7 天未备份数据，导出备份以防丢失</span>
+  <button class="btn btn-primary btn-xs" onclick="backupData()" style="flex-shrink:0;padding:4px 12px;font-size:12px;">立即备份</button>
+  <button class="btn btn-outline btn-xs" onclick="dismissBackupReminder()" style="flex-shrink:0;padding:4px 12px;font-size:12px;">稍后提醒</button>
+</div>
 <div class="no-print" style="display:flex;gap:8px;margin:8px 0;align-items:center;">
   <button class="btn btn-outline btn-sm" onclick="backupData()">💾 导出备份</button>
   <button class="btn btn-outline btn-sm" onclick="document.getElementById('backup-file-input').click()">📂 导入恢复</button>
@@ -2578,6 +2583,7 @@ cmultiQuery();
 try { bInitB(); } catch(e) { console.error('B类 init error:', e); }
 renderSavedDates();
 autoCalcDaily();
+checkBackupReminder();
 
 // ============================================================
 //  备份 & 恢复
@@ -2604,6 +2610,9 @@ function backupData() {
   a.click();
   URL.revokeObjectURL(a.href);
   document.getElementById('backup-msg').textContent = '✅ 已导出备份';
+  localStorage.setItem('last_backup_time', Date.now());
+  var el = document.getElementById('backup-reminder');
+  if (el) el.style.display = 'none';
   setTimeout(function() {
     var m = document.getElementById('backup-msg');
     if (m) m.textContent = '';
@@ -2633,5 +2642,19 @@ function restoreData(event) {
     }
   };
   reader.readAsText(file);
+}
+
+function checkBackupReminder() {
+  var last = localStorage.getItem('last_backup_time');
+  var el = document.getElementById('backup-reminder');
+  if (!el) return;
+  var sevenDays = 7 * 24 * 60 * 60 * 1000;
+  if (!last || Date.now() - parseInt(last) > sevenDays) {
+    el.style.display = 'flex';
+  }
+}
+function dismissBackupReminder() {
+  var el = document.getElementById('backup-reminder');
+  if (el) el.style.display = 'none';
 }
 </script>
