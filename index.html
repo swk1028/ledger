@@ -285,23 +285,23 @@ textarea:focus { outline: none; border-color: #d63384; }
   }
 
   /* ========== B类: two-row layout on mobile ========== */
-  .bp-pheader .bp-pidx { display: none; }
-  .bp-pheader .bp-pname {
-    order: 1;
-    flex: 1;
-    min-width: 160px;
+  .bp-pgroup .bp-pheader .bp-pidx { display: none; }
+  .bp-pgroup .bp-pheader .bp-pname {
+    order: 1 !important;
+    flex: 1 1 auto !important;
+    min-width: 160px !important;
   }
-  .bp-pheader .btn-danger {
-    order: 1;
-    flex-shrink: 0;
+  .bp-pgroup .bp-pheader .btn-danger {
+    order: 1 !important;
+    flex-shrink: 0 !important;
+    margin-left: auto;
   }
-  .bp-pheader label {
-    order: 2;
+  .bp-pgroup .bp-pheader label {
+    order: 2 !important;
     font-size: 12px;
-    white-space: nowrap;
   }
-  .bp-pheader .bp-oqty {
-    order: 2;
+  .bp-pgroup .bp-pheader .bp-oqty {
+    order: 2 !important;
     width: 70px !important;
   }
 
