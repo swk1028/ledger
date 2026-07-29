@@ -284,25 +284,9 @@ textarea:focus { outline: none; border-color: #d63384; }
     border-color: #d63384;
   }
 
-  /* ========== B类: two-row layout on mobile ========== */
-  .bp-pgroup .bp-pheader .bp-pidx { display: none; }
-  .bp-pgroup .bp-pheader .bp-pname {
-    order: 1 !important;
-    flex: 1 1 auto !important;
-    min-width: 160px !important;
-  }
-  .bp-pgroup .bp-pheader .btn-danger {
-    order: 1 !important;
-    flex-shrink: 0 !important;
-    margin-left: auto;
-  }
-  .bp-pgroup .bp-pheader label {
-    order: 2 !important;
-    font-size: 12px;
-  }
-  .bp-pgroup .bp-pheader .bp-oqty {
-    order: 2 !important;
-    width: 70px !important;
+  /* ========== B类: product name wider on mobile ========== */
+  .bp-pheader input[type="text"] {
+    min-width: 180px !important;
   }
 
   /* ========== B类: outer container → stack vertically ========== */
