@@ -544,8 +544,8 @@ textarea:focus { outline: none; border-color: #d63384; }
     <div class="card-title">📊 结算报表
       <span style="font-size:13px;font-weight:400;margin-left:12px;">
         <span id="b-report-mode-settlement" class="b-report-mode active" onclick="bSetReportMode('settlement')">结算报表</span>
-        <span class="b-report-mode" onclick="bSetReportMode('boss')">老板报表</span>
-        <span class="b-report-mode" onclick="bSetReportMode('daily')">日报表</span>
+        <span class="b-report-mode" onclick="bSetReportMode('boss')">实际拿货明细</span>
+        <span class="b-report-mode" onclick="bSetReportMode('daily')">老板报表</span>
       </span>
     </div>
     <div class="form-row" style="margin-bottom:12px;">
@@ -558,6 +558,8 @@ textarea:focus { outline: none; border-color: #d63384; }
         <select id="b-report-supplier" style="padding:6px;border:1px solid #ddd;border-radius:6px;font-size:14px;">
           <option value="">全部上家</option>
         </select>
+        <label style="margin-bottom:0;margin-left:4px;">前欠款</label>
+        <input type="number" id="b-report-prev-debt" style="padding:6px;border:1px solid #ddd;border-radius:6px;font-size:14px;width:110px;" placeholder="0" step="0.01">
         <button class="btn btn-primary btn-sm" onclick="bGenerateCurrentReport()">📊 生成报表</button>
       </div>
     </div>
@@ -1593,9 +1595,16 @@ function bGenerateReport() {
 
 
 function bCopyReport() {
-  const isBoss = b_currentReportMode === 'boss';
-  const summaryDiv = document.getElementById(isBoss ? 'b-boss-report-summary' : 'b-report-summary');
-  const detailDiv = document.getElementById(isBoss ? 'b-boss-report-detail' : 'b-report-detail');
+  let summaryId, detailId;
+  if (b_currentReportMode === 'boss') {
+    summaryId = 'b-boss-report-summary'; detailId = 'b-boss-report-detail';
+  } else if (b_currentReportMode === 'daily') {
+    summaryId = 'b-daily-report-summary'; detailId = 'b-daily-report-detail';
+  } else {
+    summaryId = 'b-report-summary'; detailId = 'b-report-detail';
+  }
+  const summaryDiv = document.getElementById(summaryId);
+  const detailDiv = document.getElementById(detailId);
   let text = '';
   if (summaryDiv) text += summaryDiv.innerText.replace(/¥/g, '¥').trim() + '\n';
   if (detailDiv && detailDiv.innerText.trim()) {
@@ -1647,6 +1656,8 @@ function bExportImage() {
   wrapper.style.cssText = 'padding:20px;background:#fff;font-family:"Microsoft YaHei",sans-serif;';
   wrapper.appendChild(summary.cloneNode(true));
   wrapper.appendChild(detail.cloneNode(true));
+  // Remove reorder buttons from cloned content so they don't appear in the exported image
+  wrapper.querySelectorAll('.b-reorder-btn').forEach(function(el) { el.remove(); });
   wrapper.style.position = 'fixed';
   wrapper.style.left = '-9999px';
   wrapper.style.top = '0';
@@ -1659,7 +1670,7 @@ function bExportImage() {
     logging: false
   }).then(function(canvas) {
     var link = document.createElement('a');
-    link.download = '野货日报表-' + new Date().toISOString().slice(0, 10) + '.png';
+    link.download = '野货老板报表-' + new Date().toISOString().slice(0, 10) + '.png';
     link.href = canvas.toDataURL('image/png');
     link.click();
     document.body.removeChild(wrapper);
@@ -1674,12 +1685,12 @@ function bExportImage() {
   });
 }
 
-// ==================== 老板报表 ====================
+// ==================== 实际拿货明细 ====================
 var b_currentReportMode = 'settlement';
 
 function bSetReportMode(mode) {
   b_currentReportMode = mode;
-  var modeNames = { settlement: '结算报表', boss: '老板报表', daily: '日报表' };
+  var modeNames = { settlement: '结算报表', boss: '实际拿货明细', daily: '老板报表' };
   document.querySelectorAll('.b-report-mode').forEach(function(el) {
     el.classList.toggle('active', el.textContent.trim() === (modeNames[mode] || ''));
   });
@@ -1833,13 +1844,20 @@ function bGenerateBossReport() {
   bSetReportMode('boss');
 }
 
-// ==================== 日报表 ====================
+// ==================== 老板报表 ====================
 function bGenerateDailyReport() {
-  const start = document.getElementById('b-report-start').value;
-  const end = document.getElementById('b-report-end').value;
-  if (!start || !end) { alert('请选择日期范围'); return; }
+  try {
+    const start = document.getElementById('b-report-start').value;
+    if (!start) { alert('请选择开始日期'); return; }
+    const end = document.getElementById('b-report-end').value;
+    if (!end) { alert('请选择结束日期'); return; }
   const records = bGetRecords();
   const returns = bGetReturns();
+  const shrinkData = bGetShrinkLoss();
+
+  // Read previous debt
+  const prevDebtEl = document.getElementById('b-report-prev-debt');
+  const prevDebt = parseFloat(prevDebtEl.value) || 0;
 
   // Generate all dates in range
   const rangeDates = [];
@@ -1854,6 +1872,7 @@ function bGenerateDailyReport() {
   let grandTotalAmt = 0;
   let hasData = false;
   let detailHtml = '';
+  let runningBalance = prevDebt;
 
   rangeDates.forEach(function(dateKey) {
     // Aggregate purchase by product+price (ignore supplier)
@@ -1891,14 +1910,43 @@ function bGenerateDailyReport() {
       dayProducts.push({ product: p.product, price: p.price, qty: actualQty, total: actualQty * p.price });
     });
 
-    if (dayProducts.length === 0) return;
+    // Check shrink loss for this day
+    let dayShrinkTotal = 0;
+    if (shrinkData[dateKey]) {
+      Object.values(shrinkData[dateKey]).forEach(function(v) { dayShrinkTotal += v; });
+    }
+
+    if (dayProducts.length === 0 && dayShrinkTotal === 0) return;
     hasData = true;
 
     let dayTotal = 0;
-    dayProducts.sort(function(a, b) { return a.product.localeCompare(b.product, 'zh'); });
+    // Sort products — use stored custom order if available, otherwise alphabetical
+    var orderStore = JSON.parse(localStorage.getItem('b_daily_product_order') || '{}');
+    var customOrder = orderStore[dateKey];
+    if (customOrder && customOrder.length > 0) {
+      var productMap = {};
+      dayProducts.forEach(function(p) { productMap[p.product] = p; });
+      var reordered = [];
+      customOrder.forEach(function(name) {
+        if (productMap[name]) { reordered.push(productMap[name]); delete productMap[name]; }
+      });
+      // Append any products not in stored order
+      var remaining = Object.keys(productMap).sort();
+      remaining.forEach(function(name) { reordered.push(productMap[name]); });
+      // Mutate const array in-place
+      dayProducts.length = 0;
+      Array.prototype.push.apply(dayProducts, reordered);
+    } else {
+      dayProducts.sort(function(a, b) {
+        var an = String(a && a.product ? a.product : '');
+        var bn = String(b && b.product ? b.product : '');
+        return an.localeCompare(bn, 'zh');
+      });
+    }
 
     detailHtml += '<div style="margin-bottom:12px;">' +
-      '<div style="font-size:14px;font-weight:600;color:#333;margin-bottom:4px;background:#f0f0f0;padding:5px 10px;border-radius:4px;">' + dateKey + '</div>' +
+      '<div style="font-size:14px;font-weight:600;color:#333;margin-bottom:4px;background:#f0f0f0;padding:5px 10px;border-radius:4px;">' + dateKey +
+      '<span style="font-weight:400;font-size:13px;margin-left:12px;color:#d63384;">前欠款结转: ¥' + bFmtNum(runningBalance) + '</span></div>' +
       '<table style="width:100%;border-collapse:collapse;font-size:13px;">' +
       '<tr>' +
       '<th style="padding:4px 8px;text-align:left;width:38%;border-bottom:1px solid #ddd;">产品名</th>' +
@@ -1906,23 +1954,47 @@ function bGenerateDailyReport() {
       '<th style="padding:4px 8px;text-align:right;width:20%;border-bottom:1px solid #ddd;">单价</th>' +
       '<th style="padding:4px 8px;text-align:right;width:27%;border-bottom:1px solid #ddd;">总价</th></tr>';
 
-    dayProducts.forEach(function(item) {
+    dayProducts.forEach(function(item, idx) {
       dayTotal += item.total;
-      detailHtml += '<tr>' +
-        '<td style="padding:3px 8px;border-bottom:1px solid #f0f0f0;">' + item.product + '</td>' +
+      var pname = (item && item.product != null ? String(item.product) : '');
+      detailHtml += '<tr data-date="' + dateKey + '">' +
+        '<td style="padding:3px 8px;border-bottom:1px solid #f0f0f0;">' +
+        '<span class="b-pname">' + pname + '</span>' +
+        '<button class="b-reorder-btn" data-dir="-1" style="cursor:pointer;font-size:12px;padding:1px 5px;margin-left:4px;border:1px solid #ddd;border-radius:3px;background:#f9f9f9;color:#888;line-height:1.3;">▲</button>' +
+        '<button class="b-reorder-btn" data-dir="1" style="cursor:pointer;font-size:12px;padding:1px 5px;margin-left:2px;border:1px solid #ddd;border-radius:3px;background:#f9f9f9;color:#888;line-height:1.3;">▼</button>' +
+        '</td>' +
         '<td style="padding:3px 8px;border-bottom:1px solid #f0f0f0;text-align:center;">' + item.qty + '</td>' +
         '<td style="padding:3px 8px;border-bottom:1px solid #f0f0f0;text-align:right;">¥' + bFmtNum(item.price) + '</td>' +
         '<td style="padding:3px 8px;border-bottom:1px solid #f0f0f0;text-align:right;font-weight:600;">¥' + bFmtNum(item.total) + '</td></tr>';
     });
 
+    if (dayShrinkTotal > 0) {
+      dayTotal += dayShrinkTotal;
+      detailHtml += '<tr style="color:#d63384;">' +
+        '<td style="padding:3px 8px;border-bottom:1px solid #f0f0f0;">📦 塑封损耗</td>' +
+        '<td style="padding:3px 8px;border-bottom:1px solid #f0f0f0;text-align:center;">-</td>' +
+        '<td style="padding:3px 8px;border-bottom:1px solid #f0f0f0;text-align:right;">-</td>' +
+        '<td style="padding:3px 8px;border-bottom:1px solid #f0f0f0;text-align:right;font-weight:600;color:#d63384;">¥' + bFmtNum(dayShrinkTotal) + '</td></tr>';
+    }
+
+    runningBalance += dayTotal;
+
     detailHtml += '<tr style="font-weight:700;color:#d63384;">' +
-      '<td style="padding:4px 8px;border-top:1px solid #d63384;text-align:right;" colspan="3">本日小计</td>' +
+      '<td style="padding:4px 8px;border-top:1px solid #d63384;text-align:right;" colspan="3">本日合计</td>' +
       '<td style="padding:4px 8px;border-top:1px solid #d63384;text-align:right;font-size:14px;">¥' + bFmtNum(dayTotal) + '</td></tr>' +
+      '<tr style="font-weight:700;color:#0056b3;background:#f0f7ff;">' +
+      '<td style="padding:4px 8px;text-align:right;border-bottom:1px solid #f0f0f0;" colspan="3">累计欠款</td>' +
+      '<td style="padding:4px 8px;text-align:right;border-bottom:1px solid #f0f0f0;font-size:14px;">¥' + bFmtNum(runningBalance) + '</td></tr>' +
       '</table></div>';
 
     grandTotalQty += dayProducts.reduce(function(sum, p) { return sum + p.qty; }, 0);
     grandTotalAmt += dayTotal;
   });
+
+  // Save filter settings
+  localStorage.setItem('b_report_start', start);
+  localStorage.setItem('b_report_end', end);
+  localStorage.setItem('b_report_supplier', document.getElementById('b-report-supplier').value);
 
   const summaryDiv = document.getElementById('b-daily-report-summary');
   const detailDiv = document.getElementById('b-daily-report-detail');
@@ -1930,7 +2002,9 @@ function bGenerateDailyReport() {
   let summaryHtml = '<div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:8px;">' +
     '<div class="summary-item"><div class="label">日期范围</div><div class="value" style="font-size:14px;">' + start + ' ~ ' + end + '</div></div>' +
     '<div class="summary-item"><div class="label">总数量</div><div class="value">' + grandTotalQty + '</div></div>' +
-    '<div class="summary-item"><div class="label">总金额</div><div class="value" style="color:#d63384;font-size:18px;">¥' + bFmtNum(grandTotalAmt) + '</div></div>' +
+    '<div class="summary-item"><div class="label">前欠款</div><div class="value" style="color:#d63384;">¥' + bFmtNum(prevDebt) + '</div></div>' +
+    '<div class="summary-item"><div class="label">期间总金额</div><div class="value" style="color:#d63384;font-size:18px;">¥' + bFmtNum(grandTotalAmt) + '</div></div>' +
+    '<div class="summary-item"><div class="label">尾欠货款</div><div class="value" style="color:#d63384;font-size:18px;font-weight:700;">¥' + bFmtNum(runningBalance) + '</div></div>' +
     '</div>';
 
   if (!hasData) {
@@ -1943,6 +2017,48 @@ function bGenerateDailyReport() {
   summaryDiv.innerHTML = summaryHtml;
   detailDiv.innerHTML = detailHtml;
 
+  // Attach click handlers to reorder buttons
+  var btns = detailDiv.querySelectorAll('.b-reorder-btn');
+  for (var _i = 0; _i < btns.length; _i++) {
+    (function(btn) {
+      var tr = btn.closest('tr');
+      var dk = tr ? tr.getAttribute('data-date') : '';
+      var pn = tr ? tr.querySelector('.b-pname').textContent : '';
+      btn.onclick = function() {
+        var store = JSON.parse(localStorage.getItem('b_daily_product_order') || '{}');
+        var order = store[dk];
+        if (!order) {
+          var records = bGetRecords();
+          var rec = records[dk];
+          if (!rec || !rec.products) return;
+          var returns = bGetReturns();
+          var names = [];
+          rec.products.forEach(function(prod) {
+            if (!prod.suppliers) return;
+            prod.suppliers.forEach(function(sup) {
+              var rQty = 0;
+              (returns || []).forEach(function(r) {
+                if (r.date === dk && (r.product || r.item) === prod.product && (r.price || 0) === (sup.price || 0)) rQty += r.qty || 0;
+              });
+              if ((sup.qty || 0) - rQty > 0 && names.indexOf(prod.product) === -1) names.push(prod.product);
+            });
+          });
+          store[dk] = names;
+          order = names;
+        }
+        var dir = parseInt(btn.getAttribute('data-dir'));
+        var i = order.indexOf(pn);
+        if (i === -1) return;
+        var ni = i + dir;
+        if (ni < 0 || ni >= order.length) return;
+        order[i] = order[ni];
+        order[ni] = pn;
+        localStorage.setItem('b_daily_product_order', JSON.stringify(store));
+        bGenerateDailyReport();
+      };
+    })(btns[_i]);
+  }
+
   // Show result area
   document.getElementById('b-report-result').style.display = 'block';
   summaryDiv.style.display = 'block';
@@ -1953,12 +2069,53 @@ function bGenerateDailyReport() {
   document.getElementById('b-boss-report-summary').style.display = 'none';
   document.getElementById('b-boss-report-detail').style.display = 'none';
 
-  // Save filter settings
-  localStorage.setItem('b_report_start', start);
-  localStorage.setItem('b_report_end', end);
-  localStorage.setItem('b_report_supplier', document.getElementById('b-report-supplier').value);
-
   bSetReportMode('daily');
+  } catch(e) { alert('出错: ' + e.message); }
+}
+
+/* Reorder product in daily report */
+function updateReorderButtons() {
+  var btns = document.querySelectorAll('#b-daily-report-detail .b-reorder-btn');
+  btns.forEach(function(btn) {
+    btn.addEventListener('click', function(ev) {
+      console.log('Reorder clicked, dir=' + btn.getAttribute('data-dir'));
+      var tr = btn.closest('tr');
+      if (!tr) { alert('找不到行'); return; }
+      var dateKey = tr.getAttribute('data-date');
+      var pname = tr.querySelector('.b-pname').textContent;
+      var dir = parseInt(btn.getAttribute('data-dir'));
+      if (isNaN(dir)) return;
+      var store = JSON.parse(localStorage.getItem('b_daily_product_order') || '{}');
+      var order = store[dateKey];
+      if (!order) {
+        var records = bGetRecords();
+        var rec = records[dateKey];
+        if (!rec || !rec.products) return;
+        var returns = bGetReturns();
+        var names = [];
+        rec.products.forEach(function(prod) {
+          if (!prod.suppliers) return;
+          prod.suppliers.forEach(function(sup) {
+            var rQty = 0;
+            (returns || []).forEach(function(r) {
+              if (r.date === dateKey && (r.product || r.item) === prod.product && (r.price || 0) === (sup.price || 0)) rQty += r.qty || 0;
+            });
+            if ((sup.qty || 0) - rQty > 0 && names.indexOf(prod.product) === -1) names.push(prod.product);
+          });
+        });
+        store[dateKey] = names;
+        order = names;
+      }
+      var i = order.indexOf(pname);
+      if (i === -1) { alert('找不到产品: ' + pname); return; }
+      var ni = i + dir;
+      if (ni < 0 || ni >= order.length) return;
+      order[i] = order[ni];
+      order[ni] = pname;
+      localStorage.setItem('b_daily_product_order', JSON.stringify(store));
+      bGenerateDailyReport();
+    });
+  });
 }
 
 function bInitB() {
