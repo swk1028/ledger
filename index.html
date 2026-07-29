@@ -200,7 +200,7 @@ textarea:focus { outline: none; border-color: #d63384; }
   .summary-item { min-width: 60px; padding: 6px 10px; }
   .result-box { font-size: 12px; }
 
-  /* ========== C类: mobile-friendly two-row layout ========== */
+  /* ========== C类: mobile card-style layout ========== */
   .supplier-group table,
   .supplier-group thead,
   .supplier-group tbody,
@@ -212,8 +212,12 @@ textarea:focus { outline: none; border-color: #d63384; }
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    padding: 8px 2px;
-    border-bottom: 1px solid #ddd;
+    padding: 10px 8px 10px 10px;
+    margin-bottom: 8px;
+    background: #fff;
+    border: 1px solid #f0d6e4;
+    border-radius: 10px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
     gap: 6px;
     position: relative;
   }
@@ -222,26 +226,63 @@ textarea:focus { outline: none; border-color: #d63384; }
     border: none !important;
     padding: 0 !important;
   }
-  /* Row 1: product name - full width */
+  /* Product name - full width row */
   .supplier-group td:first-child {
     width: 100%;
-    margin-bottom: 3px;
+    margin-bottom: 6px;
   }
   .supplier-group td:first-child input {
     width: 100%;
     box-sizing: border-box;
-    font-size: 13px;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 8px 10px;
+    border: 1px solid #e8d5e0;
+    border-radius: 8px;
+    background: #fbf5f8;
   }
-  /* Row 2: qty, price, subtotal, delete inline */
-  .supplier-group td:nth-child(2) { flex: 0 0 55px; }
-  .supplier-group td:nth-child(3) { flex: 0 0 70px; }
+  .supplier-group td:first-child input:focus {
+    outline: none;
+    border-color: #d63384;
+    background: #fff;
+  }
+  /* Qty, Price, Subtotal - inline with labels */
+  .supplier-group td:nth-child(2)::before { content: '数量'; display: block; font-size: 10px; color: #b08898; text-align: center; margin-bottom: 2px; }
+  .supplier-group td:nth-child(3)::before { content: '单价'; display: block; font-size: 10px; color: #b08898; text-align: center; margin-bottom: 2px; }
+  .supplier-group td:nth-child(4)::before { content: '小计'; display: block; font-size: 10px; color: #b08898; text-align: center; margin-bottom: 2px; }
+  .supplier-group td:nth-child(2) { flex: 0 0 56px; text-align: center; }
+  .supplier-group td:nth-child(3) { flex: 0 0 72px; text-align: center; }
   .supplier-group td:nth-child(4) {
-    flex: 0 0 60px;
+    flex: 0 0 62px;
     text-align: center !important;
     font-size: 13px;
+    font-weight: 600;
+    color: #d63384;
+    padding-top: 12px !important;
   }
   .supplier-group td:nth-child(5) { margin-left: auto; }
-  .supplier-group td input.num { width: 100%; box-sizing: border-box; }
+  .supplier-group td:nth-child(5) button {
+    width: 32px; height: 32px;
+    padding: 0;
+    border-radius: 50%;
+    font-size: 14px;
+    line-height: 32px;
+    text-align: center;
+  }
+  .supplier-group td input.num {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 6px 4px;
+    text-align: center;
+    border: 1px solid #e8d5e0;
+    border-radius: 6px;
+    font-size: 13px;
+    background: #fff;
+  }
+  .supplier-group td input.num:focus {
+    outline: none;
+    border-color: #d63384;
+  }
 
   /* ========== B类: outer container → stack vertically ========== */
   div[style*="gap:16px"][style*="align-items:flex-start"] {
