@@ -284,6 +284,84 @@ textarea:focus { outline: none; border-color: #d63384; }
     border-color: #d63384;
   }
 
+  /* ========== B类: product card on mobile ========== */
+  .bp-pheader {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .bp-pheader .bp-pidx { display: none; }
+  .bp-pheader input[type="text"].bp-pname {
+    width: 100% !important;
+    min-width: 0 !important;
+    font-size: 14px !important;
+    padding: 8px 10px !important;
+    border-radius: 8px !important;
+    margin-bottom: 4px;
+    border: 1px solid #e8d5e0 !important;
+    background: #fbf5f8 !important;
+  }
+  .bp-pheader input[type="text"].bp-pname:focus {
+    border-color: #d63384 !important;
+    background: #fff !important;
+    outline: none;
+  }
+  .bp-pheader input[type="number"] {
+    width: 80px !important;
+    padding: 6px 8px !important;
+    border-radius: 6px !important;
+  }
+  /* B类 supplier table → card rows */
+  .bp-stable,
+  .bp-stable thead,
+  .bp-stable tbody,
+  .bp-stable tr {
+    display: block;
+  }
+  .bp-stable thead { display: none; }
+  .bp-stable tr {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    padding: 8px;
+    margin-bottom: 6px;
+    background: #fff;
+    border: 1px solid #f0d6e4;
+    border-radius: 8px;
+    gap: 6px;
+  }
+  .bp-stable td {
+    display: block;
+    border: none !important;
+    padding: 0 !important;
+  }
+  /* 上家 name - full width */
+  .bp-stable td:first-child {
+    width: 100%;
+    margin-bottom: 4px;
+  }
+  .bp-stable td:first-child input {
+    width: 100%;
+    box-sizing: border-box;
+    font-size: 13px;
+    padding: 6px 8px;
+    border: 1px solid #e8d5e0;
+    border-radius: 6px;
+    background: #fafafa;
+  }
+  .bp-stable td:first-child input:focus {
+    border-color: #d63384;
+    outline: none;
+    background: #fff;
+  }
+  /* Other fields inline */
+  .bp-stable td:nth-child(2) { flex: 0 0 56px; }
+  .bp-stable td:nth-child(3) { flex: 0 0 72px; }
+  .bp-stable td:nth-child(4) { flex: 0 0 60px; text-align: center !important; }
+  .bp-stable td:nth-child(5) { flex: 0 0 72px; }
+  .bp-stable td:nth-child(6) { margin-left: auto; }
+  .bp-stable td input { width: 100%; box-sizing: border-box; font-size: 13px; }
+  .bp-stable td .bp-ssubtotal { font-size: 13px; font-weight: 600; color: #d63384; padding-top: 4px; display: block; }
+
   /* ========== B类: outer container → stack vertically ========== */
   div[style*="gap:16px"][style*="align-items:flex-start"] {
     flex-direction: column !important;
