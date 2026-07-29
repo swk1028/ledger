@@ -361,9 +361,9 @@ textarea:focus { outline: none; border-color: #d63384; }
 <h1>📋 美妆进货流水账</h1>
 
 <div class="tabs no-print">
-  <button class="tab active" onclick="switchTab('daily')">📦 C类日报</button>
-  <button class="tab" onclick="switchTab('summary')">📦 B类管理</button>
-  <button class="tab" onclick="switchTab('cmulti')">📋 C类多日汇总</button>
+  <button class="tab active" onclick="switchTab('daily')">📦 正品日报</button>
+  <button class="tab" onclick="switchTab('summary')">📦 野货管理</button>
+  <button class="tab" onclick="switchTab('cmulti')">📋 正品多日汇总</button>
 </div>
 <div class="no-print" style="display:flex;gap:8px;margin:8px 0;align-items:center;">
   <button class="btn btn-outline btn-sm" onclick="backupData()">💾 导出备份</button>
@@ -372,12 +372,12 @@ textarea:focus { outline: none; border-color: #d63384; }
   <span id="backup-msg" style="font-size:12px;color:#666;"></span>
 </div>
 
-<!-- ========== 功能一：C类日报 ========== -->
+<!-- ========== 功能一：正品日报 ========== -->
 <div id="tab-daily" class="tab-content active">
 
   <div class="card">
     <div class="card-title" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
-      <span>📅 每日C类账</span>
+      <span>📅 每日正品账</span>
       <div style="display:flex;gap:6px;">
         <button class="btn btn-primary btn-sm" onclick="saveDailyRecord()">💾 保存</button>
         <button class="btn btn-outline btn-sm" onclick="clearDailyForm()">✕ 新建</button>
@@ -445,7 +445,7 @@ textarea:focus { outline: none; border-color: #d63384; }
       <h3 style="margin:0;font-size:16px;color:#333;">📋 智能粘贴导入</h3>
       <span onclick="closeImportDialog()" style="cursor:pointer;font-size:20px;color:#999;line-height:1;">✕</span>
     </div>
-    <textarea id="import-textarea" style="width:100%;min-height:80px;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:13px;resize:vertical;font-family:monospace;box-sizing:border-box;overflow-y:hidden;" placeholder="粘贴数据...&#10;支持8种格式（同B类）：&#10;文字名 数量 价格（上家）&#10;文字名 数量（上家）&#10;文字名：数量（上家）&#10;文字名,数量（上家）&#10;文字名数量（上家）&#10;文字名\t数量&#10;文字名 数量 价格&#10;文字名 数量&#10;&#10;空行分组：段首写上家名即可" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
+    <textarea id="import-textarea" style="width:100%;min-height:80px;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:13px;resize:vertical;font-family:monospace;box-sizing:border-box;overflow-y:hidden;" placeholder="粘贴数据...&#10;支持8种格式（同野货）：&#10;文字名 数量 价格（上家）&#10;文字名 数量（上家）&#10;文字名：数量（上家）&#10;文字名,数量（上家）&#10;文字名数量（上家）&#10;文字名\t数量&#10;文字名 数量 价格&#10;文字名 数量&#10;&#10;空行分组：段首写上家名即可" oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
     <div style="display:flex;gap:8px;margin:8px 0;">
       <button class="btn btn-primary btn-sm" onclick="previewImport()">🔍 识别</button>
       <button class="btn btn-primary btn-sm" onclick="confirmImport()">📥 导入</button>
@@ -455,14 +455,14 @@ textarea:focus { outline: none; border-color: #d63384; }
   </div>
 </div>
 
-<!-- ========== 功能二：B类管理 ========== -->
+<!-- ========== 功能二：野货管理 ========== -->
 <div id="tab-summary" class="tab-content">
 
   <div style="display:flex;gap:16px;align-items:flex-start;">
     <!-- 拿货录入（产品级：产品+上家+多拿退货） -->
     <div class="card" style="flex:1;min-width:0;">
       <div class="card-title" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
-        <span>📦 B类拿货录入</span>
+        <span>📦 野货拿货录入</span>
         <div style="display:flex;gap:6px;">
           <button class="btn btn-primary btn-sm" onclick="bSaveRecord()">💾 保存</button>
           <button class="btn btn-outline btn-sm" onclick="bClearForm();bAddDefaultProducts()">✕ 新建</button>
@@ -573,10 +573,10 @@ textarea:focus { outline: none; border-color: #d63384; }
 
 </div>
 
-<!-- ========== 功能三：C类多日汇总 ========== -->
+<!-- ========== 功能三：正品多日汇总 ========== -->
 <div id="tab-cmulti" class="tab-content">
   <div class="card">
-    <div class="card-title">📋 C类多日汇总</div>
+    <div class="card-title">📋 正品多日汇总</div>
     <p style="font-size:13px;color:#666;margin:0 0 12px 0;">选择日期范围勾选需要汇总的天数，合并货款、支出、结余。</p>
 
     <div class="form-row" style="margin-bottom:12px;">
@@ -622,7 +622,7 @@ function switchTab(name) {
 }
 
 // ============================================================
-//  功能一：C类日报 — 按上家分组
+//  功能一：正品日报 — 按上家分组
 // ============================================================
 let supplierIdCounter = 0;
 
@@ -923,7 +923,7 @@ function copyDailyReport() {
   });
 }
 
-//  功能二：B类管理 — 产品级拿货录入 / 退货池 / 结算报表
+//  功能二：野货管理 — 产品级拿货录入 / 退货池 / 结算报表
 // ============================================================
 //  存储 key 独立，不干扰 C 类数据
 // ============================================================
@@ -1654,7 +1654,7 @@ function bExportImage() {
     logging: false
   }).then(function(canvas) {
     var link = document.createElement('a');
-    link.download = 'B类日报表-' + new Date().toISOString().slice(0, 10) + '.png';
+    link.download = '野货日报表-' + new Date().toISOString().slice(0, 10) + '.png';
     link.href = canvas.toDataURL('image/png');
     link.click();
     document.body.removeChild(wrapper);
@@ -2310,7 +2310,7 @@ function renderSavedDates() {
 }
 
 // ============================================================
-//  C类多日汇总
+//  正品多日汇总
 // ============================================================
 function cmultiQuery() {
   const start = document.getElementById('cmulti-start').value;
